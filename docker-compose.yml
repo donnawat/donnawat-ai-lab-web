@@ -1,0 +1,42 @@
+services:
+  donnawat-ai-lab:
+    build: .
+    container_name: donnawat-ai-lab
+    restart: unless-stopped
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.donnawat-http.rule=Host(`donnawat-ai.tech`) || Host(`www.donnawat-ai.tech`)"
+      - "traefik.http.routers.donnawat-http.entrypoints=web"
+      - "traefik.http.routers.donnawat-http.middlewares=https-redirect"
+
+      # HTTPS router
+      - "traefik.http.routers.donnawat-https.rule=Host(`donnawat-ai.tech`) || Host(`www.donnawat-ai.tech`)"
+      - "traefik.http.routers.donnawat-https.entrypoints=websecure"
+      - "traefik.http.routers.donnawat-https.tls=true"
+      - "traefik.http.routers.donnawat-https.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.donnawat-https.middlewares=www-redirect,security-headers"
+
+      # www → apex redirect
+      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\\.donnawat-ai\\.tech/(.*)"
+      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://donnawat-ai.tech/$${1}"
+      - "traefik.http.middlewares.www-redirect.redirectregex.permanent=true"
+
+      # HTTP → HTTPS middleware
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+
+      # Security headers middleware
+      - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.security-headers.headers.stsPreload=true"
+
+      # Service port
+      - "traefik.http.services.donnawat-ai-lab.loadbalancer.server.port=80"
+
+networks:
+  traefik-public:
+    external: true
