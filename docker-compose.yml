@@ -3,10 +3,13 @@ services:
     build: .
     container_name: donnawat-ai-lab
     restart: unless-stopped
-    ports:
-      - "80:80"
+    expose:
+      - "80"
+    networks:
+      - donnawat-ai-lab-web_default
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=donnawat-ai-lab-web_default"
 
       # HTTP → HTTPS redirect
       - "traefik.http.routers.donnawat-http.rule=Host(`donnawat-ai.tech`) || Host(`www.donnawat-ai.tech`)"
@@ -37,3 +40,6 @@ services:
       # Service port
       - "traefik.http.services.donnawat-ai-lab.loadbalancer.server.port=80"
 
+networks:
+  donnawat-ai-lab-web_default:
+    external: true
